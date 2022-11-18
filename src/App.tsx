@@ -1,34 +1,69 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+import Search from "./components/search/Search";
+import { WEATHER_API_KEY, WEATHER_API_URL } from "./api";
+import CurrentWeather from "./components/current/CurrentWeather";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentWeatherFrom, setCurrentWeatherFrom] = useState(null);
+  const [currentWeatherTo, setCurrentWeatherTo] = useState(null);
+  const [forecast, setForecast] = useState(null);
+
+  const handleOnSearchChangeFrom = (searchData) => {
+    const [latitude, longitude] = searchData.value.split(" ");
+
+    const currentWeatherFetch = fetch(
+      `${WEATHER_API_URL}/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=imperial`
+    );
+    const forecastFetch = fetch(
+      `${WEATHER_API_URL}/forecast?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=imperial`
+    );
+
+    Promise.all([currentWeatherFetch, forecastFetch])
+      .then(async (response) => {
+        const weatherResponse = await response[0].json();
+        const forecastResponse = await response[1].json();
+
+        setCurrentWeatherFrom({ city: searchData.label, ...weatherResponse });
+        setForecast({ city: searchData.label, ...forecastResponse });
+      })
+      .catch(console.log);
+  };
+
+  const handleOnSearchChangeTo = (searchData) => {
+    const [latitude, longitude] = searchData.value.split(" ");
+
+    const currentWeatherFetch = fetch(
+      `${WEATHER_API_URL}/weather?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=imperial`
+    );
+    const forecastFetch = fetch(
+      `${WEATHER_API_URL}/forecast?lat=${latitude}&lon=${longitude}&appid=${WEATHER_API_KEY}&units=imperial`
+    );
+
+    Promise.all([currentWeatherFetch, forecastFetch])
+      .then(async (response) => {
+        const weatherResponse = await response[0].json();
+        const forecastResponse = await response[1].json();
+
+        setCurrentWeatherTo({ city: searchData.label, ...weatherResponse });
+        setForecast({ city: searchData.label, ...forecastResponse });
+      })
+      .catch(console.log);
+  };
 
   return (
-    <div className="App">
+    <div className="container">
       <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        <Search onSearchChange={handleOnSearchChangeFrom} />
+        {currentWeatherFrom && <CurrentWeather data={currentWeatherFrom} />}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
+      <div>
+        <Search onSearchChange={handleOnSearchChangeTo} />
+        {currentWeatherTo && <CurrentWeather data={currentWeatherTo} />}
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      {/* {forecast && <Forecast data={forecast} />} */}
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
